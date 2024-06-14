@@ -1,11 +1,14 @@
 package bryan.miranda.ejemplospinner
 
+import android.app.DatePickerDialog
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
 import android.widget.Spinner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +16,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import modelo.ClaseConexion
 import modelo.dataClassDoctores
+import java.util.Calendar
+import java.util.UUID
 
 class pacientes : Fragment() {
 
@@ -29,6 +34,10 @@ class pacientes : Fragment() {
 
         val root = inflater.inflate(R.layout.fragment_pacientes, container, false)
         val spDoctores = root.findViewById<Spinner>(R.id.spDoctores)
+        val txtFechaNacimiento = root.findViewById<EditText>(R.id.txtFechaNacimiento)
+        val txtNombrePaciente = root.findViewById<EditText>(R.id.txtNombrePaciente)
+        val txtDireccionPaciente = root.findViewById<EditText>(R.id.txtDireccionPaciente)
+        val btnGuardarPaciente = root.findViewById<Button>(R.id.btnGuardarPaciente)
 
         fun obtenerDoctores(): List<dataClassDoctores> {
             val objConexion = ClaseConexion().cadenaConexion()
@@ -64,6 +73,46 @@ withContext(Dispatchers.Main) {
 }
         }
 
+        //Mostrar el calendario al hacer click en el EditText txtFechaNacimientoPaciente
+        txtFechaNacimiento.setOnClickListener {
+            val calendario = Calendar.getInstance()
+            val anio = calendario.get(Calendar.YEAR)
+            val mes = calendario.get(Calendar.MONTH)
+            val dia = calendario.get(Calendar.DAY_OF_MONTH)
+            val datePickerDialog = DatePickerDialog(
+                requireContext(),
+                { view, anioSeleccionado, mesSeleccionado, diaSeleccionado ->
+                    val fechaSeleccionada =
+                        "$diaSeleccionado/${mesSeleccionado + 1}/$anioSeleccionado"
+                    txtFechaNacimiento.setText(fechaSeleccionada)
+                },
+                anio, mes, dia
+            )
+            datePickerDialog.show()
+        }
+//programar boton de guardar
+        btnGuardarPaciente.setOnClickListener{
+            CoroutineScope(Dispatchers.IO).launch {
+                //Crear un obj de la clase conexion
+                val objConexion = ClaseConexion().cadenaConexion()
+
+                val doctor = obtenerDoctores()
+
+            //Crear una variable que contenga un PrepateStatement
+                val addPaciente = objConexion?.prepareStatement("insert into tbPacientes(pacienteUUID, doctorUUID, Nombre, fechadeNacimiento, direccion) values (?, ?, ?, ?, ?)")!!
+                addPaciente.setString(1, UUID.randomUUID().toString())
+                addPaciente.setString(2, doctor[spDoctores.selectedItemPosition].DoctorUUID)
+                addPaciente.setString(3, txtNombrePaciente.text.toString())
+                addPaciente.setString(4, txtFechaNacimiento.text.toString() )
+                addPaciente.setString(5, txtDireccionPaciente.text.toString())
+                addPaciente.executeQuery()
+
+                withContext(Dispatchers.Main){
+                    txtNombrePaciente.setText("")
+                    txtDireccionPaciente.setText("")
+                }
+            }
+        }
 
         return root
     }
