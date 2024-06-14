@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
+import android.widget.Toast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -99,17 +100,19 @@ withContext(Dispatchers.Main) {
                 val doctor = obtenerDoctores()
 
             //Crear una variable que contenga un PrepateStatement
-                val addPaciente = objConexion?.prepareStatement("insert into tbPacientes(pacienteUUID, doctorUUID, Nombre, fechadeNacimiento, direccion) values (?, ?, ?, ?, ?)")!!
+                val addPaciente = objConexion?.prepareStatement("insert into tbPacientes(PacienteUUID, DoctorUUID, Nombre, FechaNacimiento, Direccion) values (?, ?, ?, ?, ?)")!!
                 addPaciente.setString(1, UUID.randomUUID().toString())
                 addPaciente.setString(2, doctor[spDoctores.selectedItemPosition].DoctorUUID)
                 addPaciente.setString(3, txtNombrePaciente.text.toString())
                 addPaciente.setString(4, txtFechaNacimiento.text.toString() )
                 addPaciente.setString(5, txtDireccionPaciente.text.toString())
-                addPaciente.executeQuery()
+                addPaciente.executeUpdate()
 
                 withContext(Dispatchers.Main){
                     txtNombrePaciente.setText("")
                     txtDireccionPaciente.setText("")
+                    txtFechaNacimiento.setText("")
+                    Toast.makeText(requireContext(), "paciente agregado", Toast.LENGTH_SHORT).show()
                 }
             }
         }
